@@ -10,7 +10,7 @@ interface CalculatorProps {
   onCalculationChange?: (calculation: any) => void;
 }
 export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, onCalculationChange }) => {
-  const { t } = useAppContext();
+  const { t, language } = useAppContext();
   const [diameter, setDiameter] = useState('');
   const [length, setLength] = useState('');
   const [thickness, setThickness] = useState('');
@@ -92,7 +92,9 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, onCalc
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-gray-600 mb-2">{t('selectMaterialEmpty')}</h3>
+        <h3 className="text-lg font-semibold text-gray-600 mb-2">
+          {language === 'hi' ? 'सामग्री प्रकार चुनें' : 'Select Material Type'}
+        </h3>
         <p className="text-gray-500">{t('chooseMaterialTypeAbove')}</p>
       </div>
     );
@@ -101,7 +103,12 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, onCalc
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">{t('calculator')}</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">{t('calculator')}</h2>
+          <h3 className="text-lg font-semibold text-gray-600 mt-2">
+            {selectedMaterial ? selectedMaterial.name : (language === 'hi' ? 'सामग्री प्रकार चुनें' : 'Select Material Type')}
+          </h3>
+        </div>
         <select
           value={unit}
           onChange={(e) => setUnit(e.target.value as any)}

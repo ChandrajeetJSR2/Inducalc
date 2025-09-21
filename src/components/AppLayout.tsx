@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
+import { materialTypeImages } from '../materialTypeImages';
+import { materialDescriptionsHi } from '../materialDescriptions.hi';
+import { materialTypeDescriptionsHi } from '../materialTypeDescriptions.hi';
+import { materialTypeDescriptions } from '../materialTypeDescriptions';
 import { MaterialCard } from './MaterialCard';
 import { Calculator } from './Calculator';
 import { ProjectSaver } from './ProjectSaver';
@@ -9,61 +13,174 @@ import { QuickActions } from './QuickActions';
 
 export const AppLayout: React.FC = () => {
   const { language, toggleLanguage, t } = useAppContext();
-  const materials = [
-    {
-      id: 'steel-pipe',
-      name: t('steelPipe'),
-      description: t('steelPipeDesc'),
-      density: 490,
-      pricePerLb: 0.85,
-      image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828968007_2a1fdf73.webp'
-    },
-    {
-      id: 'steel-rod',
-      name: t('steelRod'),
-      description: t('steelRodDesc'),
-      density: 490,
-      pricePerLb: 0.75,
-      image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828969903_bad39f9e.webp'
-    },
-    {
-      id: 'aluminum',
-      name: t('aluminum'),
-      description: t('aluminumDesc'),
-      density: 168,
-      pricePerLb: 1.25,
-      image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828976104_2e5760ba.webp'
-    },
-    {
-      id: 'rebar',
-      name: t('rebar'),
-      description: t('rebarDesc'),
-      density: 490,
-      pricePerLb: 0.65,
-      image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828983325_be0633d5.webp'
-    },
-    {
-      id: 'concrete',
-      name: t('concrete'),
-      description: t('concreteDesc'),
-      density: 150,
-      pricePerLb: 0.12,
-      image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828979973_72191290.webp'
-    },
-    {
-      id: 'stainless',
-      name: t('stainlessSteel'),
-      description: t('stainlessSteelDesc'),
-      density: 500,
-      pricePerLb: 2.15,
-      image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828971603_fed79859.webp'
-    }
-  ];
-  const [selectedMaterial, setSelectedMaterial] = useState<typeof materials[0] | null>(null);
-  const [currentCalculation, setCurrentCalculation] = useState<any>(null);
+    const materials = [
+      {
+        id: 'ms',
+        name: 'Mild Steel (MS)',
+        types: [
+          'Pipe', 'Rod', 'Sheet', 'Plate', 'Angle (ISA)', 'Channel (ISMC)', 'Beam (ISMB)', 'SHS', 'RHS', 'TMT Bar', 'Wire', 'Bar'
+        ],
+        description: 'Mild Steel is widely used for construction, fabrication, and reinforcement. All Indian Standard sections (ISA, ISMC, ISMB, SHS, RHS, TMT) are types of MS, not separate materials.',
+        density: 7850,
+        pricePerLb: 0.85,
+        image: 'https://d64gsuwffb70l.cloudfront.net/ms-preview.webp'
+      },
+      // ...existing materials...
+      {
+        id: 'stainless',
+        name: 'Stainless Steel',
+        types: ['Pipe', 'Rod', 'Sheet', 'Plate', 'Channel', 'Wire', 'Tube', 'Bar'],
+        description: 'Corrosion-resistant steel alloy for food, chemical, and architectural use.',
+        density: 8000,
+        pricePerLb: 2.15,
+        image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828971603_fed79859.webp'
+      },
+      {
+        id: 'aluminum',
+        name: 'Aluminum',
+        types: ['Pipe', 'Rod', 'Sheet', 'Plate', 'Channel', 'Wire', 'Tube', 'Bar', 'Angle'],
+        description: 'Lightweight, corrosion-resistant metal for transport, construction, and packaging.',
+        density: 2700,
+        pricePerLb: 1.25,
+        image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828976104_2e5760ba.webp'
+      },
+      {
+        id: 'copper',
+        name: 'Copper',
+        types: ['Pipe', 'Rod', 'Sheet', 'Plate', 'Channel', 'Wire', 'Tube', 'Bar'],
+        description: 'High conductivity metal for electrical, plumbing, and industrial use.',
+        density: 8960,
+        pricePerLb: 3.50,
+        image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828983325_be0633d5.webp'
+      },
+      {
+        id: 'brass',
+        name: 'Brass',
+        types: ['Pipe', 'Rod', 'Sheet', 'Plate', 'Channel', 'Wire', 'Tube', 'Bar'],
+        description: 'Copper-zinc alloy for decorative, plumbing, and electrical use.',
+        density: 8500,
+        pricePerLb: 2.00,
+        image: 'https://d64gsuwffb70l.cloudfront.net/brass-preview.webp'
+      },
+      {
+        id: 'bronze',
+        name: 'Bronze',
+        types: ['Pipe', 'Rod', 'Sheet', 'Plate', 'Channel', 'Wire', 'Tube', 'Bar'],
+        description: 'Copper-tin alloy for bearings, bushings, and marine hardware.',
+        density: 8800,
+        pricePerLb: 2.50,
+        image: 'https://d64gsuwffb70l.cloudfront.net/bronze-preview.webp'
+      },
+      {
+        id: 'castiron',
+        name: 'Cast Iron',
+        types: ['Pipe', 'Rod', 'Bar', 'Plate'],
+        description: 'Iron-carbon alloy for pipes, machinery, and automotive parts.',
+        density: 7200,
+        pricePerLb: 0.60,
+        image: 'https://d64gsuwffb70l.cloudfront.net/castiron-preview.webp'
+      },
+      {
+        id: 'concrete',
+        name: 'Concrete',
+        types: ['Beam', 'Block', 'Slab', 'Column'],
+        description: 'Composite material for construction, used in beams, blocks, slabs, and columns.',
+        density: 2400,
+        pricePerLb: 0.12,
+        image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828979973_72191290.webp'
+      },
+      {
+        id: 'plastic',
+        name: 'Plastic',
+        types: ['Pipe', 'Sheet', 'Rod', 'Block', 'Tube', 'Bar'],
+        description: 'Synthetic material for lightweight, corrosion-resistant applications.',
+        density: 950,
+        pricePerLb: 0.50,
+        image: 'https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828963179_58e238f1.webp'
+      },
+      {
+        id: 'lead',
+        name: 'Lead',
+        types: ['Sheet', 'Pipe', 'Rod', 'Bar'],
+        description: 'Heavy, malleable metal for radiation shielding and batteries.',
+        density: 11340,
+        pricePerLb: 2.00,
+        image: 'https://d64gsuwffb70l.cloudfront.net/lead-preview.webp'
+      },
+      {
+        id: 'zinc',
+        name: 'Zinc',
+        types: ['Sheet', 'Rod', 'Bar', 'Plate'],
+        description: 'Corrosion-resistant metal for galvanizing and die-casting.',
+        density: 7135,
+        pricePerLb: 1.50,
+        image: 'https://d64gsuwffb70l.cloudfront.net/zinc-preview.webp'
+      },
+      {
+        id: 'titanium',
+        name: 'Titanium',
+        types: ['Pipe', 'Rod', 'Sheet', 'Plate', 'Bar'],
+        description: 'High-strength, lightweight metal for aerospace and medical use.',
+        density: 4500,
+        pricePerLb: 10.00,
+        image: 'https://d64gsuwffb70l.cloudfront.net/titanium-preview.webp'
+      },
+      {
+        id: 'nickel',
+        name: 'Nickel',
+        types: ['Pipe', 'Rod', 'Sheet', 'Plate', 'Bar'],
+        description: 'Corrosion-resistant metal for alloys and batteries.',
+        density: 8900,
+        pricePerLb: 8.00,
+        image: 'https://d64gsuwffb70l.cloudfront.net/nickel-preview.webp'
+      },
+      {
+        id: 'tin',
+        name: 'Tin',
+        types: ['Sheet', 'Rod', 'Bar'],
+        description: 'Soft, malleable metal for coatings and alloys.',
+        density: 7280,
+        pricePerLb: 2.50,
+        image: 'https://d64gsuwffb70l.cloudfront.net/tin-preview.webp'
+      },
+      {
+        id: 'glass',
+        name: 'Glass',
+        types: ['Sheet', 'Rod', 'Block'],
+        description: 'Non-crystalline solid for windows, containers, and optics.',
+        density: 2500,
+        pricePerLb: 0.80,
+        image: 'https://d64gsuwffb70l.cloudfront.net/glass-preview.webp'
+      },
+      {
+        id: 'wood',
+        name: 'Wood',
+        types: ['Beam', 'Plank', 'Board', 'Block'],
+        description: 'Natural material for construction, furniture, and packaging.',
+        density: 600,
+        pricePerLb: 0.30,
+        image: 'https://d64gsuwffb70l.cloudfront.net/wood-preview.webp'
+      },
+    ];
+    const [selectedMaterialId, setSelectedMaterialId] = useState('');
+    const [selectedType, setSelectedType] = useState('');
+    const selectedMaterial = materials.find(m => m.id === selectedMaterialId) || null;
+    const [currentCalculation, setCurrentCalculation] = useState<any>(null);
+  // const [currentCalculation, setCurrentCalculation] = useState<any>(null); // Already declared below
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 bg-white/90 shadow-sm border-b border-gray-200 flex items-center justify-between px-4 py-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">InduCalc</h1>
+        <button
+          onClick={toggleLanguage}
+          className="bg-white/80 hover:bg-white text-gray-800 rounded-full px-3 py-1 text-xs font-semibold shadow-md border border-gray-200 transition"
+          aria-label="Switch language"
+        >
+          {language === 'en' ? 'हिन्दी' : 'English'}
+        </button>
+      </div>
       {/* Hero Section */}
       <div
         className="relative h-48 sm:h-64 bg-cover bg-center bg-no-repeat"
@@ -71,14 +188,6 @@ export const AppLayout: React.FC = () => {
           backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)), url('https://d64gsuwffb70l.cloudfront.net/68c6572494b6310b9ac6dca9_1757828963179_58e238f1.webp')`
         }}
       >
-        {/* Language Switcher Button */}
-        <button
-          onClick={toggleLanguage}
-          className="absolute top-3 right-3 z-10 bg-white/80 hover:bg-white text-gray-800 rounded-full px-3 py-1 text-xs font-semibold shadow-md border border-gray-200 transition"
-          aria-label="Switch language"
-        >
-          {language === 'en' ? 'हिन्दी' : 'English'}
-        </button>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white px-2 sm:px-4">
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-2 sm:mb-4">
@@ -107,7 +216,6 @@ export const AppLayout: React.FC = () => {
                 <span>{t('projectMgmt')}</span>
               </div>
             </div>
-          <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">{t('selectMaterial')}</h2>
           </div>
         </div>
       </div>
@@ -115,21 +223,78 @@ export const AppLayout: React.FC = () => {
   <div className="w-full max-w-full px-1 py-2 sm:px-4 sm:py-8">
         {/* Material Selection */}
         <div className="mb-2 sm:mb-8">
-          <h2 className="text-base sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-6">{t('selectMaterialType')}</h2>
-          <div className="flex flex-col gap-2 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
-            {materials.map((material) => (
-              <MaterialCard
-                key={material.id}
-                name={material.name}
-                image={material.image}
-                description={material.description}
-                density={material.density}
-                pricePerLb={material.pricePerLb}
-                isSelected={selectedMaterial?.id === material.id}
-                onClick={() => setSelectedMaterial(material)}
-              />
-            ))}
-          </div>
+          <h2 className="text-base sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-6">{language === 'hi' ? 'सामग्री प्रकार चुनें' : 'Select Material Type'}</h2>
+            <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <select
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg appearance-none"
+                     value={selectedMaterialId}
+                     onChange={e => {
+                       setSelectedMaterialId(e.target.value);
+                       setSelectedType('');
+                     }}
+                   >
+                     <option value="" disabled>{language === 'hi' ? 'सामग्री चुनें' : 'Select Material'}</option>
+                     {materials.map(material => (
+                       <option key={material.id} value={material.id}>
+                         {language === 'hi' && t('materialNames') && t('materialNames')[material.id] ? t('materialNames')[material.id] : material.name}
+                       </option>
+                     ))}
+                   </select>
+                {/* Helper text */}
+                {!selectedMaterialId && <div className="text-xs text-red-500 mt-1">{language === 'hi' ? 'कृपया सामग्री चुनें' : 'Please select a material.'}</div>}
+              </div>
+              <div>
+                <select
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg appearance-none"
+                     value={selectedType}
+                     onChange={e => setSelectedType(e.target.value)}
+                     disabled={!selectedMaterial}
+                   >
+                     <option value="" disabled>{language === 'hi' ? 'प्रकार चुनें' : 'Select Type'}</option>
+                     {selectedMaterial && selectedMaterial.types.map(type => (
+                       <option key={type} value={type}>
+                         {language === 'hi' && t('materialTypes') && t('materialTypes')[type] ? t('materialTypes')[type] : type}
+                       </option>
+                     ))}
+                   </select>
+                {/* Helper text */}
+                {selectedMaterial && !selectedType && <div className="text-xs text-red-500 mt-1">{language === 'hi' ? 'कृपया प्रकार चुनें' : 'Please select a type.'}</div>}
+              </div>
+            </div>
+            {selectedMaterial && (
+                 <div className="mt-6 p-6 rounded-xl bg-white shadow border border-gray-200 flex flex-col sm:flex-row items-center gap-6">
+                   <img
+                     src={selectedType && materialTypeImages[selectedMaterial.id]?.[selectedType] ? materialTypeImages[selectedMaterial.id][selectedType] : selectedMaterial.image}
+                     alt={selectedMaterial.name + (selectedType ? ' ' + selectedType : '')}
+                     className="w-24 h-24 rounded-lg border border-gray-300 object-cover"
+                     onError={e => { e.currentTarget.src = selectedMaterial.image; }}
+                   />
+                   <div className="flex-1 text-left">
+                     <div className="font-bold text-2xl mb-2 text-gray-800">
+                       {language === 'hi' && t('materialNames') && t('materialNames')[selectedMaterial.id] ? t('materialNames')[selectedMaterial.id] : selectedMaterial.name}
+                       {selectedType && <span className="text-base text-gray-500">({language === 'hi' && t('materialTypes') && t('materialTypes')[selectedType] ? t('materialTypes')[selectedType] : selectedType})</span>}
+                     </div>
+                     <div className="mb-2 text-gray-700 text-base">
+             {selectedType && (language === 'hi'
+             ? materialTypeDescriptionsHi[selectedMaterial.id]?.[selectedType]
+             : materialTypeDescriptions[selectedMaterial.id]?.[selectedType])
+             ? (language === 'hi'
+               ? materialTypeDescriptionsHi[selectedMaterial.id]?.[selectedType]
+               : materialTypeDescriptions[selectedMaterial.id]?.[selectedType])
+             : (language === 'hi'
+               ? materialDescriptionsHi[selectedMaterial.id] || selectedMaterial.description
+               : selectedMaterial.description)}
+                     </div>
+                     <div className="mb-1 text-gray-600 text-sm">
+                       {language === 'hi' ? 'घनत्व:' : 'Density:'} <span className="font-semibold">{selectedMaterial.density} kg/m³</span>
+                     </div>
+                     <div className="mb-1 text-gray-600 text-sm">
+                       {language === 'hi' ? 'प्रकार:' : 'Type:'} <span className="font-semibold">{selectedType ? (language === 'hi' && t('materialTypes') && t('materialTypes')[selectedType] ? t('materialTypes')[selectedType] : selectedType) : (language === 'hi' ? 'प्रकार चुनें' : 'Select Type')}</span>
+                     </div>
+                   </div>
+                 </div>
+            )}
         </div>
         
         {/* Quick Actions */}
@@ -137,7 +302,8 @@ export const AppLayout: React.FC = () => {
           materialCount={materials.length}
           onExportPDF={() => alert('PDF export feature coming soon!')}
           onClearAll={() => {
-            setSelectedMaterial(null);
+            setSelectedMaterialId('');
+            setSelectedType('');
             setCurrentCalculation(null);
           }}
           onImportData={() => alert('Import feature coming soon!')}
