@@ -297,7 +297,23 @@ export const AppLayout: React.FC = () => {
             )}
         </div>
         
-        {/* Quick Actions */}
+        {/* Calculator and Project Saver */}
+        <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-8">
+          <div>
+            <Calculator 
+              selectedMaterial={selectedMaterial ? { ...selectedMaterial, id: selectedMaterial.id } : null}
+              selectedType={selectedType}
+              onCalculationChange={setCurrentCalculation}
+            />
+          </div>
+          <div>
+            <ProjectSaver 
+              currentCalculation={currentCalculation}
+            />
+          </div>
+        </div>
+
+        {/* Quick Actions (moved below) */}
         <QuickActions 
           materialCount={materials.length}
           onExportPDF={() => alert('PDF export feature coming soon!')}
@@ -308,21 +324,6 @@ export const AppLayout: React.FC = () => {
           }}
           onImportData={() => alert('Import feature coming soon!')}
         />
-
-        {/* Calculator and Project Saver */}
-  <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-8">
-          <div>
-            <Calculator 
-              selectedMaterial={selectedMaterial}
-              onCalculationChange={setCurrentCalculation}
-            />
-          </div>
-          <div>
-            <ProjectSaver 
-              currentCalculation={currentCalculation}
-            />
-          </div>
-        </div>
 
         {/* Features Section */}
         <div className="mt-4 sm:mt-16 bg-white rounded-xl shadow-lg p-2 sm:p-8">
