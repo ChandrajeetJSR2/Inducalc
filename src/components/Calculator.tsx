@@ -6,12 +6,63 @@ interface CalculatorProps {
     id: string;
     name: string;
     density: number;
-    pricePerLb: number;
+    pricePerKg: number;
   } | null;
   selectedType: string;
   onCalculationChange?: (calculation: any) => void;
 }
 export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, selectedType, onCalculationChange }) => {
+  // Backup prices for all material/type combinations
+  const backupPrices: Record<string, Record<string, number>> = {
+    ms: {
+      Pipe: 55, Rod: 55, Sheet: 55, Plate: 55, 'Angle (ISA)': 55, 'Channel (ISMC)': 55, 'Beam (ISMB)': 55, SHS: 55, RHS: 55, 'TMT Bar': 55, Wire: 55, Bar: 55
+    },
+    stainless: {
+      Pipe: 180, Rod: 180, Sheet: 180, Plate: 180, Channel: 180, Wire: 180, Tube: 180, Bar: 180
+    },
+    aluminum: {
+      Pipe: 220, Rod: 220, Sheet: 220, Plate: 220, Channel: 220, Wire: 220, Tube: 220, Bar: 220, Angle: 220
+    },
+    copper: {
+      Pipe: 800, Rod: 800, Sheet: 800, Plate: 800, Channel: 800, Wire: 800, Tube: 800, Bar: 800
+    },
+    brass: {
+      Pipe: 500, Rod: 500, Sheet: 500, Plate: 500, Channel: 500, Wire: 500, Tube: 500, Bar: 500
+    },
+    bronze: {
+      Pipe: 600, Rod: 600, Sheet: 600, Plate: 600, Channel: 600, Wire: 600, Tube: 600, Bar: 600
+    },
+    castiron: {
+      Pipe: 60, Rod: 60, Bar: 60, Plate: 60
+    },
+    concrete: {
+      Beam: 7, Block: 7, Slab: 7, Column: 7
+    },
+    plastic: {
+      Pipe: 120, Sheet: 120, Rod: 120, Block: 120, Tube: 120, Bar: 120
+    },
+    lead: {
+      Sheet: 200, Pipe: 200, Rod: 200, Bar: 200
+    },
+    zinc: {
+      Sheet: 250, Rod: 250, Bar: 250, Plate: 250
+    },
+    titanium: {
+      Pipe: 1800, Rod: 1800, Sheet: 1800, Plate: 1800, Bar: 1800
+    },
+    nickel: {
+      Pipe: 1600, Rod: 1600, Sheet: 1600, Plate: 1600, Bar: 1600
+    },
+    tin: {
+      Sheet: 900, Rod: 900, Bar: 900
+    },
+    glass: {
+      Sheet: 40, Rod: 40, Block: 40
+    },
+    wood: {
+      Beam: 60, Plank: 60, Board: 60, Block: 60
+    }
+  };
   const { t, language } = useAppContext();
   // Dynamic input states
   const [diameter, setDiameter] = useState('');
@@ -25,6 +76,28 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
   // Unit state for each field
   const unitOptions = ['mm', 'cm', 'm', 'inch', 'ft'];
   const [units, setUnits] = useState({
+    diameter: 'mm',
+    thickness: 'mm',
+    length: 'mm',
+    width: 'mm',
+    height: 'mm',
+  });
+
+  // Price unit state
+  const priceUnits = ['₹/kg', '₹/ton'];
+  const [priceInput, setPriceInput] = useState('');
+  const [priceUnit, setPriceUnit] = useState('₹/kg');
+  const [onlinePrice, setOnlinePrice] = useState<number | null>(null);
+
+  // Add original value state for each dimension field
+  const [originalValues, setOriginalValues] = useState({
+    diameter: '',
+    thickness: '',
+    length: '',
+    width: '',
+    height: '',
+  });
+  const [originalUnits, setOriginalUnits] = useState({
     diameter: 'mm',
     thickness: 'mm',
     length: 'mm',
@@ -78,21 +151,15 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
   // Indian standard: all units in mm, cm, or meter, density in kg/m³, price in ₹/kg
   const calculateWeight = () => {
     if (!selectedMaterial || !selectedType) return;
-    // Convert density from lb/ft³ to kg/m³
     const densityKg = selectedMaterial.density * 16.0185;
-    // Convert price from $/lb to ₹/kg
-    const pricePerKg = selectedMaterial.pricePerLb * 181 * 2.20462;
     let volume = 0;
 
-    // Helper: convert value to meters based on unit
-    const getVal = (field: string) => toMeters(
-      field === 'diameter' ? diameter :
-      field === 'thickness' ? thickness :
-      field === 'length' ? length :
-      field === 'width' ? width :
-      field === 'height' ? height : '',
-      units[field as keyof typeof units]
-    );
+    // Always use original value and original unit for calculation
+    const getVal = (field: string) => {
+      const val = originalValues[field];
+      const unit = originalUnits[field];
+      return toMeters(val, unit);
+    };
 
     // Dynamic calculation logic
     if (["Pipe"].includes(selectedType)) {
@@ -141,11 +208,11 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
   volume = lM;
     }
 
-    const calculatedWeight = volume * densityKg;
-    const calculatedPrice = calculatedWeight * pricePerKg;
-
-    setWeight(calculatedWeight);
-    setPrice(calculatedPrice);
+    let weightKg = volume * densityKg;
+  let pricePerUnit = priceInput !== '' ? Number(priceInput) : (onlinePrice !== null ? (priceUnit === '₹/ton' ? onlinePrice * 1000 : onlinePrice) : (backupPrices[selectedMaterial.id]?.[selectedType] ?? selectedMaterial.pricePerKg));
+    let totalPrice = weightKg * (pricePerUnit / (priceUnit === '₹/ton' ? 1000 : 1));
+    setWeight(weightKg);
+    setPrice(totalPrice);
 
     // Notify parent component of calculation change
     if (onCalculationChange) {
@@ -157,8 +224,8 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
         thickness: thickness ? parseFloat(thickness) : undefined,
         width: width ? parseFloat(width) : undefined,
         height: height ? parseFloat(height) : undefined,
-        weight: calculatedWeight,
-        price: calculatedPrice
+        weight: weightKg,
+        price: totalPrice
       });
     }
   };
@@ -167,6 +234,70 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
     calculateWeight();
   }, [diameter, length, thickness, selectedMaterial, selectedType, language]);
 
+  useEffect(() => {
+    if (selectedMaterial && (diameter === '' && thickness === '' && length === '' && width === '' && height === '')) {
+      setPriceInput('');
+    }
+  }, [selectedMaterial, diameter, thickness, length, width, height]);
+
+  // Fetch online price for default, update placeholder and calculation on material/type/unit change.
+  useEffect(() => {
+    async function fetchOnlinePrice() {
+      if (!selectedMaterial || !selectedType) return;
+      const apiUrl = `/api/price?material=${selectedMaterial.id}&type=${selectedType}&unit=₹/kg`;
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        if (data && typeof data.price === 'number' && data.price > 0) {
+          setOnlinePrice(data.price);
+        } else {
+          setOnlinePrice(backupPrices[selectedMaterial.id]?.[selectedType] ?? selectedMaterial.pricePerKg);
+        }
+      } catch {
+        setOnlinePrice(backupPrices[selectedMaterial.id]?.[selectedType] ?? selectedMaterial.pricePerKg);
+      }
+    }
+    fetchOnlinePrice();
+  }, [selectedMaterial, selectedType]);
+
+  // Helper to convert price between units
+  function convertPrice(price: number, fromUnit: string, toUnit: string) {
+    if (fromUnit === toUnit) return price;
+    if (fromUnit === '₹/kg' && toUnit === '₹/ton') return price / 1000;
+    if (fromUnit === '₹/ton' && toUnit === '₹/kg') return price * 1000;
+    return price;
+  }
+
+  // Helper to convert dimension value between units
+  function convertDimension(val: string, fromUnit: string, toUnit: string) {
+    const v = parseFloat(val);
+    if (isNaN(v)) return '';
+    if (fromUnit === toUnit) return val;
+    // mm <-> cm <-> m <-> inch <-> ft
+    const unitToM = {
+      mm: 0.001,
+      cm: 0.01,
+      m: 1,
+      inch: 0.0254,
+      ft: 0.3048,
+    };
+    const meters = v * unitToM[fromUnit];
+    return (meters / unitToM[toUnit]).toFixed(2);
+  }
+
+  const handlePriceUnitChange = () => {
+    const nextUnit = priceUnits[(priceUnits.indexOf(priceUnit) + 1) % priceUnits.length];
+    setPriceUnit(nextUnit);
+    // Convert input and placeholder price to new unit
+    setPriceInput(prev => {
+      if (prev === '') return '';
+      if (nextUnit === '₹/ton') {
+        return (Number(prev) * 1000).toString();
+      } else {
+        return (Number(prev) / 1000).toString();
+      }
+    });
+  }
 
   // If no material selected
   if (!selectedMaterial) {
@@ -200,6 +331,10 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
     );
   }
 
+  // Add metricUnits and imperialUnits at the top of the component
+  const metricUnits = ['mm', 'cm', 'm'];
+  const imperialUnits = ['inch', 'ft'];
+
   // If both material and type are selected, show input box
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
@@ -220,29 +355,28 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
       <div className="space-y-4 mb-6">
         {getFieldsForType(selectedType).map(field => {
           // Capitalize first letter for label and placeholder
-          const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
           let label = '';
           let placeholder = '';
           let allowedUnits = unitOptions;
           if (field === 'diameter') {
-            label = capitalize(t('diameter'));
-            placeholder = capitalize(t('enterDiameter'));
+            label = language === 'hi' ? t('diameter') : 'Diameter';
+            placeholder = language === 'hi' ? t('enterDiameter') : 'Enter Diameter';
             allowedUnits = ['mm', 'cm', 'inch'];
           } else if (field === 'thickness') {
-            label = 'Thickness';
-            placeholder = 'Enter Thickness';
+            label = language === 'hi' ? t('thickness') : 'Thickness';
+            placeholder = language === 'hi' ? t('enterThickness') : 'Enter Thickness';
             allowedUnits = ['mm', 'cm', 'inch'];
           } else if (field === 'length') {
-            label = capitalize(t('length'));
-            placeholder = capitalize(t('enterLength'));
+            label = language === 'hi' ? t('length') : 'Length';
+            placeholder = language === 'hi' ? t('enterLength') : 'Enter Length';
             allowedUnits = ['mm', 'cm', 'm', 'inch', 'ft'];
           } else if (field === 'width') {
-            label = capitalize(t('width'));
-            placeholder = capitalize(t('enterWidth'));
+            label = language === 'hi' ? t('width') : 'Width';
+            placeholder = language === 'hi' ? t('enterWidth') : 'Enter Width';
             allowedUnits = ['mm', 'cm', 'm', 'inch', 'ft'];
           } else if (field === 'height') {
-            label = capitalize(t('height'));
-            placeholder = capitalize(t('enterHeight'));
+            label = language === 'hi' ? t('height') : 'Height';
+            placeholder = language === 'hi' ? t('enterHeight') : 'Enter Height';
             allowedUnits = ['mm', 'cm', 'm', 'inch', 'ft'];
           }
 
@@ -253,21 +387,39 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
 
           // Validation: value must be positive
           let value = '';
-          if (field === 'diameter') value = diameter;
-          if (field === 'thickness') value = thickness;
-          if (field === 'length') value = length;
-          if (field === 'width') value = width;
-          if (field === 'height') value = height;
+          // Always convert value from original unit to current unit
+          value = originalValues[field] !== '' ? convertDimension(originalValues[field], originalUnits[field], currentUnit) : '';
           const isInvalid = value !== '' && (isNaN(Number(value)) || Number(value) <= 0);
 
           return (
-            <div key={field} className="flex items-center gap-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+            <div key={field} className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">{label}</label>
+                <button
+                  type="button"
+                  className="bg-white/80 hover:bg-white text-gray-800 rounded-full px-3 py-1 text-xs font-semibold shadow-md border border-gray-200 transition"
+                  onClick={() => {
+                    setUnits(units => {
+                      const prevUnit = units[field];
+                      const newUnit = nextUnit;
+                      // No need to update value here, just update unit
+                      return { ...units, [field]: newUnit };
+                    });
+                  }}
+                  title={`Switch unit (current: ${currentUnit})`}
+                  disabled={allowedUnits.length <= 1}
+                >
+                  {currentUnit}
+                </button>
+              </div>
               <input
                 type="number"
                 value={value}
                 onChange={e => {
                   const val = e.target.value;
+                  // Store original value and unit on user input
+                  setOriginalValues(v => ({ ...v, [field]: val }));
+                  setOriginalUnits(u => ({ ...u, [field]: currentUnit }));
                   if (field === 'diameter') setDiameter(val);
                   if (field === 'thickness') setThickness(val);
                   if (field === 'length') setLength(val);
@@ -275,24 +427,42 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
                   if (field === 'height') setHeight(val);
                 }}
                 placeholder={placeholder}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg ${isInvalid ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg ${isInvalid ? 'border-red-500' : 'border-gray-300'}`}
                 min={1}
               />
-              <button
-                type="button"
-                className="ml-2 px-2 py-1 rounded text-sm border bg-green-500 text-white"
-                onClick={() => setUnits(units => ({ ...units, [field]: nextUnit }))}
-                title={`Switch unit (current: ${currentUnit})`}
-                disabled={allowedUnits.length <= 1}
-              >
-                {currentUnit}
-              </button>
               {isInvalid && (
-                <span className="text-xs text-red-600 ml-2">Enter a valid positive value</span>
+                <span className="text-xs text-red-600 ml-2">{language === 'hi' ? 'सही मान दर्ज करें' : 'Enter a valid positive value'}</span>
               )}
             </div>
           );
         })}
+        {/* Price input box */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700">{language === 'hi' ? 'मूल्य' : 'Price'}</label>
+            <button
+              type="button"
+              className="bg-white/80 hover:bg-white text-gray-800 rounded-full px-3 py-1 text-xs font-semibold shadow-md border border-gray-200 transition"
+              onClick={handlePriceUnitChange}
+              title={`Switch price unit (current: ${priceUnit})`}
+            >
+              {priceUnit}
+            </button>
+          </div>
+          <input
+            type="number"
+            value={priceInput}
+            onChange={e => {
+              // Always store as per current unit
+              setPriceInput(e.target.value);
+            }}
+            placeholder={language === 'hi'
+              ? `मूल्य दर्ज करें (${onlinePrice !== null ? (priceUnit === '₹/ton' ? (onlinePrice * 1000).toFixed(2) : onlinePrice.toFixed(2)) : (backupPrices[selectedMaterial.id]?.[selectedType] ?? selectedMaterial.pricePerKg).toFixed(2)} ${priceUnit})`
+              : `Enter Price (${onlinePrice !== null ? (priceUnit === '₹/ton' ? (onlinePrice * 1000).toFixed(2) : onlinePrice.toFixed(2)) : (backupPrices[selectedMaterial.id]?.[selectedType] ?? selectedMaterial.pricePerKg).toFixed(2)} ${priceUnit})`}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg`}
+            min={0}
+          />
+        </div>
       </div>
 
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
@@ -310,9 +480,7 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
             <div className="text-sm text-gray-600">{t('price')}</div>
           </div>
         </div>
-        <div className="mt-4 text-center text-sm text-gray-600">
-          {t('material')}: {selectedMaterial.name} • {t('density')}: {(selectedMaterial.density * 16.0185).toFixed(0)} {t('densityUnit')}
-        </div>
+        {/* Remove material description and density info below result */}
       </div>
     </div>
   );
