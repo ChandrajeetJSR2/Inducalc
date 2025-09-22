@@ -21,8 +21,56 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState(0);
   const [price, setPrice] = useState(0);
-  // Remove unit selector, default to mm
-  const unit = 'mm';
+
+  // Unit state for each field
+  const unitOptions = ['mm', 'cm', 'm', 'inch', 'ft'];
+  const [units, setUnits] = useState({
+    diameter: 'mm',
+    thickness: 'mm',
+    length: 'mm',
+    width: 'mm',
+    height: 'mm',
+  });
+
+  // Helper: convert value to meters based on unit
+  const toMeters = (val: string, unit: string) => {
+    const v = val ? parseFloat(val) : 0;
+    switch (unit) {
+      case 'mm': return v / 1000;
+      case 'cm': return v / 100;
+      case 'm': return v;
+      case 'inch': return v * 0.0254;
+      case 'ft': return v * 0.3048;
+      default: return v / 1000;
+    }
+  };
+
+  // Helper: get required fields for selectedType
+  const getFieldsForType = (type: string) => {
+    switch (type) {
+      case 'Pipe':
+        return ['diameter', 'thickness', 'length'];
+      case 'Rod':
+      case 'Bar':
+      case 'Wire':
+      case 'TMT Bar':
+      case 'Rebar':
+        return ['diameter', 'length'];
+      case 'Sheet':
+      case 'Plate':
+        return ['length', 'width', 'thickness'];
+      case 'Block':
+        return ['length', 'width', 'height'];
+      case 'Channel':
+      case 'Angle':
+      case 'Beam':
+      case 'SHS':
+      case 'RHS':
+        return ['height', 'width', 'thickness', 'length'];
+      default:
+        return ['length'];
+    }
+  };
 
   // New: detect if type is selected
   const typeSelected = !!selectedType;
@@ -36,54 +84,61 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
     const pricePerKg = selectedMaterial.pricePerLb * 181 * 2.20462;
     let volume = 0;
 
-    // Helper: convert mm to m
-    const mmToM = (val: string) => val ? parseFloat(val) / 1000 : 0;
+    // Helper: convert value to meters based on unit
+    const getVal = (field: string) => toMeters(
+      field === 'diameter' ? diameter :
+      field === 'thickness' ? thickness :
+      field === 'length' ? length :
+      field === 'width' ? width :
+      field === 'height' ? height : '',
+      units[field as keyof typeof units]
+    );
 
     // Dynamic calculation logic
     if (["Pipe"].includes(selectedType)) {
       // Pipe: diameter, thickness, length
-      if (!diameter || !thickness || !length) return;
-      const dM = mmToM(diameter);
-      const tM = mmToM(thickness);
-      const lM = mmToM(length);
-      const outerRadius = dM / 2;
-      const innerRadius = (dM - 2 * tM) / 2;
-      volume = Math.PI * (outerRadius ** 2 - innerRadius ** 2) * lM;
+  if (!diameter || !thickness || !length) return;
+  const dM = getVal('diameter');
+  const tM = getVal('thickness');
+  const lM = getVal('length');
+  const outerRadius = dM / 2;
+  const innerRadius = (dM - 2 * tM) / 2;
+  volume = Math.PI * (outerRadius ** 2 - innerRadius ** 2) * lM;
     } else if (["Rod", "Bar", "Wire", "TMT Bar"].includes(selectedType)) {
       // Rod/Bar/Wire: diameter, length
-      if (!diameter || !length) return;
-      const dM = mmToM(diameter);
-      const lM = mmToM(length);
-      const radius = dM / 2;
-      volume = Math.PI * radius * radius * lM;
+  if (!diameter || !length) return;
+  const dM = getVal('diameter');
+  const lM = getVal('length');
+  const radius = dM / 2;
+  volume = Math.PI * radius * radius * lM;
     } else if (["Sheet", "Plate"].includes(selectedType)) {
       // Sheet/Plate: length, width, thickness
-      if (!length || !width || !thickness) return;
-      const lM = mmToM(length);
-      const wM = mmToM(width);
-      const tM = mmToM(thickness);
-      volume = lM * wM * tM;
+  if (!length || !width || !thickness) return;
+  const lM = getVal('length');
+  const wM = getVal('width');
+  const tM = getVal('thickness');
+  volume = lM * wM * tM;
     } else if (["Block"].includes(selectedType)) {
       // Block: length, width, height
-      if (!length || !width || !height) return;
-      const lM = mmToM(length);
-      const wM = mmToM(width);
-      const hM = mmToM(height);
-      volume = lM * wM * hM;
+  if (!length || !width || !height) return;
+  const lM = getVal('length');
+  const wM = getVal('width');
+  const hM = getVal('height');
+  volume = lM * wM * hM;
     } else if (["Channel", "Angle", "Beam", "SHS", "RHS"].includes(selectedType)) {
       // Channel/Angle/Beam/SHS/RHS: height, width, thickness, length
-      if (!height || !width || !thickness || !length) return;
-      const hM = mmToM(height);
-      const wM = mmToM(width);
-      const tM = mmToM(thickness);
-      const lM = mmToM(length);
-      // Approximate as hollow rectangle
-      volume = ((hM * wM) - ((hM - 2 * tM) * (wM - 2 * tM))) * lM;
+  if (!height || !width || !thickness || !length) return;
+  const hM = getVal('height');
+  const wM = getVal('width');
+  const tM = getVal('thickness');
+  const lM = getVal('length');
+  // Approximate as hollow rectangle
+  volume = ((hM * wM) - ((hM - 2 * tM) * (wM - 2 * tM))) * lM;
     } else {
       // Default: use length only
-      if (!length) return;
-      const lM = mmToM(length);
-      volume = lM;
+  if (!length) return;
+  const lM = getVal('length');
+  volume = lM;
     }
 
     const calculatedWeight = volume * densityKg;
@@ -161,100 +216,83 @@ export const Calculator: React.FC<CalculatorProps> = ({ selectedMaterial, select
         </h3>
       </div>
 
-      {/* Dynamic input boxes based on type */}
+      {/* Dynamic input boxes based on type (refactored) */}
       <div className="space-y-4 mb-6">
-        {/* Pipe: diameter, thickness, length */}
-        {["Pipe"].includes(selectedType) && (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('diameter')} (mm)</label>
-              <input type="number" value={diameter} onChange={e => setDiameter(e.target.value)} placeholder={t('enterDiameter')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
+        {getFieldsForType(selectedType).map(field => {
+          // Capitalize first letter for label and placeholder
+          const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+          let label = '';
+          let placeholder = '';
+          let allowedUnits = unitOptions;
+          if (field === 'diameter') {
+            label = capitalize(t('diameter'));
+            placeholder = capitalize(t('enterDiameter'));
+            allowedUnits = ['mm', 'cm', 'inch'];
+          } else if (field === 'thickness') {
+            label = 'Thickness';
+            placeholder = 'Enter Thickness';
+            allowedUnits = ['mm', 'cm', 'inch'];
+          } else if (field === 'length') {
+            label = capitalize(t('length'));
+            placeholder = capitalize(t('enterLength'));
+            allowedUnits = ['mm', 'cm', 'm', 'inch', 'ft'];
+          } else if (field === 'width') {
+            label = capitalize(t('width'));
+            placeholder = capitalize(t('enterWidth'));
+            allowedUnits = ['mm', 'cm', 'm', 'inch', 'ft'];
+          } else if (field === 'height') {
+            label = capitalize(t('height'));
+            placeholder = capitalize(t('enterHeight'));
+            allowedUnits = ['mm', 'cm', 'm', 'inch', 'ft'];
+          }
+
+          // Single button for unit switcher (cycle only allowed units)
+          const currentUnit = units[field as keyof typeof units];
+          const currentIdx = allowedUnits.indexOf(currentUnit);
+          const nextUnit = allowedUnits[(currentIdx + 1) % allowedUnits.length];
+
+          // Validation: value must be positive
+          let value = '';
+          if (field === 'diameter') value = diameter;
+          if (field === 'thickness') value = thickness;
+          if (field === 'length') value = length;
+          if (field === 'width') value = width;
+          if (field === 'height') value = height;
+          const isInvalid = value !== '' && (isNaN(Number(value)) || Number(value) <= 0);
+
+          return (
+            <div key={field} className="flex items-center gap-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+              <input
+                type="number"
+                value={value}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (field === 'diameter') setDiameter(val);
+                  if (field === 'thickness') setThickness(val);
+                  if (field === 'length') setLength(val);
+                  if (field === 'width') setWidth(val);
+                  if (field === 'height') setHeight(val);
+                }}
+                placeholder={placeholder}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg ${isInvalid ? 'border-red-500' : 'border-gray-300'}`}
+                min={1}
+              />
+              <button
+                type="button"
+                className="ml-2 px-2 py-1 rounded text-sm border bg-green-500 text-white"
+                onClick={() => setUnits(units => ({ ...units, [field]: nextUnit }))}
+                title={`Switch unit (current: ${currentUnit})`}
+                disabled={allowedUnits.length <= 1}
+              >
+                {currentUnit}
+              </button>
+              {isInvalid && (
+                <span className="text-xs text-red-600 ml-2">Enter a valid positive value</span>
+              )}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Thickness (mm)</label>
-              <input type="number" value={thickness} onChange={e => setThickness(e.target.value)} placeholder={t('enterThickness')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('length')} (mm)</label>
-              <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder={t('enterLength')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-          </>
-        )}
-        {/* Rod/Bar/Wire: diameter, length */}
-        {["Rod", "Bar", "Wire", "TMT Bar"].includes(selectedType) && (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('diameter')} (mm)</label>
-              <input type="number" value={diameter} onChange={e => setDiameter(e.target.value)} placeholder={t('enterDiameter')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('length')} (mm)</label>
-              <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder={t('enterLength')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-          </>
-        )}
-        {/* Sheet/Plate: length, width, thickness */}
-        {["Sheet", "Plate"].includes(selectedType) && (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('length')} (mm)</label>
-              <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder={t('enterLength')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('width')} (mm)</label>
-              <input type="number" value={width} onChange={e => setWidth(e.target.value)} placeholder={t('enterWidth')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('thickness')} (mm)</label>
-              <input type="number" value={thickness} onChange={e => setThickness(e.target.value)} placeholder={t('enterThickness')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-          </>
-        )}
-        {/* Block: length, width, height */}
-        {["Block"].includes(selectedType) && (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('length')} (mm)</label>
-              <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder={t('enterLength')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('width')} (mm)</label>
-              <input type="number" value={width} onChange={e => setWidth(e.target.value)} placeholder={t('enterWidth')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('height')} (mm)</label>
-              <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder={t('enterHeight')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-          </>
-        )}
-        {/* Channel/Angle/Beam/SHS/RHS: height, width, thickness, length */}
-        {["Channel", "Angle", "Beam", "SHS", "RHS"].includes(selectedType) && (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('height')} (mm)</label>
-              <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder={t('enterHeight')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('width')} (mm)</label>
-              <input type="number" value={width} onChange={e => setWidth(e.target.value)} placeholder={t('enterWidth')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('thickness')} (mm)</label>
-              <input type="number" value={thickness} onChange={e => setThickness(e.target.value)} placeholder={t('enterThickness')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('length')} (mm)</label>
-              <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder={t('enterLength')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-            </div>
-          </>
-        )}
-        {/* Default: length only */}
-        {!["Pipe", "Rod", "Bar", "Wire", "TMT Bar", "Sheet", "Plate", "Block", "Channel", "Angle", "Beam", "SHS", "RHS"].includes(selectedType) && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('length')} (mm)</label>
-            <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder={t('enterLength')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" />
-          </div>
-        )}
+          );
+        })}
       </div>
 
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
